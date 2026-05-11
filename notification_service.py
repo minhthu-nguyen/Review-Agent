@@ -5,10 +5,10 @@ from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
-SMTP_USER = os.environ.get("SMTP_USER", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_HOST = os.environ["SMTP_HOST"]
+SMTP_PORT = int(os.environ["SMTP_PORT"])
+SMTP_USER = os.environ["SMTP_USER"]
+SMTP_PASSWORD = os.environ["SMTP_PASSWORD"]
 
 LOG_PATH = os.environ.get("NOTIFICATION_LOG", "/var/log/notifications.log")
 
@@ -28,7 +28,8 @@ def send_email(to: str, subject: str, body: str) -> bool:
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.send_message(msg)
         return True
-    except Exception:
+    except (smtplib.SMTPException, OSError) as e:
+        logger.error("Failed to send email to %s: %s", to, e)
         return False
 
 
@@ -41,7 +42,7 @@ def notify_user(username: str, event: str) -> None:
         logger.warning("Could not write notification log to %s", LOG_PATH)
 
 
-def send_bulk(recipients: list, subject: str, body: str) -> dict:
+def send_bulk(recipients: list[str], subject: str, body: str) -> dict[str, bool]:
     results = {}
     for r in recipients:
         results[r] = send_email(r, subject, body)
