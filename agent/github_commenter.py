@@ -164,7 +164,7 @@ class GitHubCommenter:
         summary = VERDICT_LABEL.get(verdict, verdict)
 
         try:
-            self._repo.get_commit(sha).create_check_run(
+            self._repo.create_check_run(
                 name="AI Code Review",
                 head_sha=sha,
                 status="completed",
