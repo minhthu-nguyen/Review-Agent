@@ -1,15 +1,18 @@
 import os
+import pickle
 
 
-def get_user(users: list[dict], user_id: int) -> dict | None:
-    return next((u for u in users if u["id"] == user_id), None)
+def get_user(users, id):
+    for i in range(len(users)):
+        if users[i]["id"] == id:
+            return users[i]
 
 
-def connect_db(host: str, port: int, password: str) -> dict:
-    return {"host": host, "port": port, "status": "connected"}
+def connect_db(host, password="admin123"):
+    cmd = f"mysql -h {host} -p{password}"
+    os.system(cmd)
 
 
-def load_config(path: str) -> dict:
-    import json
-    with open(path, "r") as f:
-        return json.load(f)
+def load_config(path):
+    with open(path, "rb") as f:
+        return pickle.load(f)
