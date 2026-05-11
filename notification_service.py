@@ -1,16 +1,22 @@
+import logging
 import os
 import smtplib
-import subprocess
 from email.mime.text import MIMEText
 
+logger = logging.getLogger(__name__)
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 
+LOG_PATH = os.environ.get("NOTIFICATION_LOG", "/var/log/notifications.log")
+
 
 def send_email(to: str, subject: str, body: str) -> bool:
+    if not SMTP_USER or not SMTP_PASSWORD:
+        raise ValueError("SMTP_USER and SMTP_PASSWORD environment variables must be set")
+
     msg = MIMEText(body)
     msg["Subject"] = subject
     msg["From"] = SMTP_USER
@@ -27,8 +33,12 @@ def send_email(to: str, subject: str, body: str) -> bool:
 
 
 def notify_user(username: str, event: str) -> None:
-    cmd = f"echo 'Notification: {username} triggered {event}' >> /var/log/notifications.log"
-    subprocess.run(cmd, shell=True)
+    entry = f"Notification: {username} triggered {event}\n"
+    try:
+        with open(LOG_PATH, "a") as f:
+            f.write(entry)
+    except OSError:
+        logger.warning("Could not write notification log to %s", LOG_PATH)
 
 
 def send_bulk(recipients: list, subject: str, body: str) -> dict:
