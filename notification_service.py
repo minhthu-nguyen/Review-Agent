@@ -5,6 +5,11 @@ from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
 
+_REQUIRED_ENV = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD"]
+_missing = [k for k in _REQUIRED_ENV if not os.environ.get(k)]
+if _missing:
+    raise EnvironmentError(f"Missing required environment variables: {', '.join(_missing)}")
+
 SMTP_HOST = os.environ["SMTP_HOST"]
 SMTP_PORT = int(os.environ["SMTP_PORT"])
 SMTP_USER = os.environ["SMTP_USER"]
