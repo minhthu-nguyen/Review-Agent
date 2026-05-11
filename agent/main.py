@@ -34,7 +34,11 @@ def main() -> None:
         print("BASE_SHA and HEAD_SHA are required. Skipping review.")
         return
 
-    file_diffs = parse_diff(base_sha, head_sha)
+    try:
+        file_diffs = parse_diff(base_sha, head_sha)
+    except Exception as e:
+        print(f"Failed to parse diff: {e}. Skipping review.")
+        return
 
     if not file_diffs:
         print("No relevant files changed (.py/.java/.go). Skipping review.")
