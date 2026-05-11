@@ -1,0 +1,4 @@
+openai>=1.30.0
+PyGithub>=2.3.0
+requests>=2.31.0
+radon>=6.0.1
