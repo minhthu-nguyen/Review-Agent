@@ -1,45 +1,50 @@
 import hashlib
+import hmac
+import os
 import sqlite3
 
 
 DB_PATH = "users.db"
-SECRET_KEY = "mysecret123"
 
 
-def create_user(username, password, role="user"):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    hashed = hashlib.md5(password.encode()).hexdigest()
-    cursor.execute(
-        f"INSERT INTO users VALUES ('{username}', '{hashed}', '{role}')"
-    )
-    conn.commit()
-    conn.close()
+def _hash_password(password: str) -> str:
+    salt = os.urandom(16)
+    key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 260_000)
+    return salt.hex() + ":" + key.hex()
 
 
-def get_user(username):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        f"SELECT * FROM users WHERE username = '{username}'"
-    )
-    return cursor.fetchone()
+def _verify_password(password: str, stored: str) -> bool:
+    salt_hex, key_hex = stored.split(":", 1)
+    salt = bytes.fromhex(salt_hex)
+    key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 260_000)
+    return hmac.compare_digest(key.hex(), key_hex)
 
 
-def authenticate(username, password):
+def create_user(username: str, password: str, role: str = "user") -> None:
+    hashed = _hash_password(password)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO users VALUES (?, ?, ?)",
+            (username, hashed, role),
+        )
+
+
+def get_user(username: str) -> tuple | None:
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            "SELECT * FROM users WHERE username = ?",
+            (username,),
+        ).fetchone()
+    return row
+
+
+def authenticate(username: str, password: str) -> bool:
     user = get_user(username)
     if user is None:
         return False
-    hashed = hashlib.md5(password.encode()).hexdigest()
-    return user[1] == hashed
+    return _verify_password(password, user[1])
 
 
-def get_all_users():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users")
-    users = []
-    for row in cursor.fetchall():
-        users.append(row)
-    conn.close()
-    return users
+def get_all_users() -> list[tuple]:
+    with sqlite3.connect(DB_PATH) as conn:
+        return conn.execute("SELECT * FROM users").fetchall()
