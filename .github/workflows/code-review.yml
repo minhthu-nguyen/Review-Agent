@@ -36,4 +36,4 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           EVENT_TYPE: ${{ github.event_name }}
-        run: python agent/main.py
+        run: python -m agent.main
