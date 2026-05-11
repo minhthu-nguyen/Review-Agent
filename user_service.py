@@ -4,7 +4,7 @@ import os
 import sqlite3
 
 
-DB_PATH = "users.db"
+DB_PATH = os.environ.get("DB_PATH", "users.db")
 
 
 def _hash_password(password: str) -> str:
